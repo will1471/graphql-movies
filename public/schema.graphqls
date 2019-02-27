@@ -10,7 +10,7 @@ type Movie {
     description:String
     year:Int
     actors:[Actor]!
-    category:[String]!
+    category:[String!]!
 }
 
 type Query {
