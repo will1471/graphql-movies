@@ -1,13 +1,33 @@
 <?php
 
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
-use GraphQL\Type\Definition\Type;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Psr\Http\Message\ResponseInterface;
 
 require_once __DIR__ . '/../vendor/autoload.php';
+
+function mysql_rows_to_data(array $rows, array $map): array
+{
+    return array_map(function (array $row) use ($map): array {
+        $d = [];
+        foreach ($row as $k => $v) {
+            $d[$map[$k]] = $v;
+        }
+        return $d;
+    }, $rows);
+}
+
+function build_columns(array $map, ResolveInfo $resolveInfo, string $idKey = 'id'): string
+{
+    $columms = [$map[$idKey]];
+    foreach (array_keys($resolveInfo->getFieldSelection()) as $k) {
+        if (isset($map[$k])) $columms[] = $map[$k];
+    }
+    $columms = array_unique($columms);
+    $columms = implode(', ', $columms);
+    return $columms;
+}
 
 $app = new \Slim\App();
 
@@ -46,111 +66,69 @@ $app->map(['GET', 'POST'], '/', function (Request $request, Response $response):
         ]
     );
 
-    $actorType = new ObjectType([
-        'name' => 'Actor',
-        'fields' => [
-            'id' => ['type' => Type::id()],
-            'firstName' => ['type' => Type::nonNull(Type::string())],
-            'lastName' => ['type' => Type::nonNull(Type::string())],
-        ]
-    ]);
+    $contents = file_get_contents(__DIR__ . '/schema.graphqls');
+    $schema = \GraphQL\Utils\BuildSchema::build($contents);
 
-    $movieType = new ObjectType([
-        'name' => 'Movie',
-        'fields' => [
-            'id' => ['type' => Type::id()],
-            'name' => ['type' => Type::string()],
-            'description' => ['type' => Type::string()],
-            'year' => ['type' => Type::int()],
-            'actors' => [
-                'type' => Type::listOf($actorType),
-                'resolve' => function ($movie) use ($pdo) {
-                    $sql = <<<SQL
-SELECT actor.*
-FROM actor
-JOIN film_actor ON actor.actor_id = film_actor.actor_id
-WHERE film_id = :film_id;
-SQL;
-                    $select = $pdo->prepare($sql);
-                    $select->execute(['film_id' => $movie['id']]);
-                    $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
-                    return array_map(function (array $row): array {
-                        return [
-                            'id' => $row['actor_id'],
-                            'firstName' => $row['first_name'],
-                            'lastName' => $row['last_name'],
-                        ];
-                    }, $rows);
-                }
-            ],
-            'category' => [
-                'type' => Type::listOf(Type::string()),
-                'resolve' => function ($movie) use ($pdo) {
-                    $sql = <<<SQL
-SELECT name
-FROM category
-JOIN film_category fc ON category.category_id = fc.category_id
-WHERE fc.film_id = :film_id
-SQL;
-                    $select = $pdo->prepare($sql);
-                    $select->execute(['film_id' => $movie['id']]);
-                    $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
-                    return array_map(function (array $row): string {
-                        return $row['name'];
-                    }, $rows);
-                }
-            ]
-        ]
-    ]);
-
-    $queryType = new ObjectType([
-        'name' => 'Query',
-        'fields' => [
-            'echo' => [
-                'type' => Type::string(),
-                'args' => [
-                    'message' => Type::nonNull(Type::string()),
-                ],
-                'resolve' => function ($root, $args) {
-                    return $root['prefix'] . $args['message'];
-                }
-            ],
-
-            'listMovies' => [
-                'type' => Type::listOf($movieType),
-                'args' => [
-                    'limit' => [
-                        'name' => 'limit',
-                        'type' => Type::int(),
-                        'defaultValue' => 10
-                    ]
-                ],
-                'resolve' => function ($root, $args, $context, ResolveInfo $resolveInfo) use ($pdo) {
-                    $limit = (int)$args['limit'];
-
-                    // var_dump($resolveInfo->getFieldSelection());
-                    $select = $pdo->prepare('SELECT * FROM film LIMIT ' . $limit);
-                    $select->execute([]);
-                    $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
-                    return array_map(function (array $row): array {
-                        return [
-                            'id' => $row['film_id'],
-                            'name' => $row['title'],
-                            'description' => $row['description'],
-                            'year' => $row['release_year']
-                        ];
-                    }, $rows);
-                }
-            ]
-        ],
-    ]);
-
-    $schema = new \GraphQL\Type\Schema([
-        'query' => $queryType
-    ]);
     $serverConfig = new \GraphQL\Server\ServerConfig();
     $serverConfig->setSchema($schema);
     $serverConfig->setDebug(true);
+    $serverConfig->setFieldResolver(function ($ctx, $args, $context, ResolveInfo $resolveInfo) use ($pdo, $logger) {
+
+        if (isset($ctx[$resolveInfo->fieldName])) {
+            return $ctx[$resolveInfo->fieldName];
+        }
+
+        if ($resolveInfo->fieldName == 'listMovies') {
+            $limit = (int)$args['limit'];
+            $columns = build_columns($map = [
+                'id' => 'film_id',
+                'name' => 'title',
+                'description' => 'description',
+                'year' => 'release_year'
+            ], $resolveInfo, 'id');
+            $select = $pdo->prepare($sql = "SELECT $columns FROM film LIMIT $limit;");
+            $select->execute([]);
+            $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
+            return mysql_rows_to_data($rows, array_flip($map));
+        }
+
+        if ($resolveInfo->fieldName == 'category') {
+            $sql = <<<SQL
+SELECT name
+FROM category c
+JOIN film_category fc ON c.category_id = fc.category_id
+WHERE fc.film_id = :film_id
+SQL;
+            $select = $pdo->prepare($sql);
+            $select->execute($params = ['film_id' => $ctx['id']]);
+            $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
+            return array_column($rows, 'name');
+        }
+
+        if ($resolveInfo->fieldName == 'actors') {
+            $columns = build_columns([
+                'id' => '`a`.`actor_id`',
+                'firstName' => '`a`.`first_name`',
+                'lastName' => '`a`.`last_name`',
+            ], $resolveInfo, 'id');
+            $sql = <<<SQL
+SELECT $columns
+FROM actor a
+JOIN film_actor fa ON a.actor_id = fa.actor_id
+WHERE fa.film_id = :film_id;
+SQL;
+            $select = $pdo->prepare($sql);
+            $select->execute($params = ['film_id' => $ctx['id']]);
+            $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
+            return mysql_rows_to_data($rows, [
+                'actor_id' => 'id',
+                'first_name' => 'firstName',
+                'last_name' => 'lastName',
+            ]);
+        }
+
+        throw new \Exception('unsupported');
+    });
     $server = new \GraphQL\Server\StandardServer($serverConfig);
     return $server->processPsrRequest($request, $response, $response->getBody());
 });

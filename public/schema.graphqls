@@ -1,0 +1,22 @@
+type Actor {
+    id: ID!
+    firstName: String!
+    lastName: String!
+}
+
+type Movie {
+    id:ID!
+    name:String!
+    description:String
+    year:Int
+    actors:[Actor]!
+    category:[String]!
+}
+
+type Query {
+    listMovies(limit:Int!): [Movie]!
+}
+
+schema {
+    query: Query
+}
