@@ -84,7 +84,7 @@ class CategoryBuffer
         $ids = join(',', $ids);
 
         $sql = <<<SQL
-SELECT fc.film_id
+SELECT fc.film_id, name
 FROM category c
 JOIN film_category fc ON c.category_id = fc.category_id
 WHERE fc.film_id IN ($ids);
