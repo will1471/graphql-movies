@@ -14,7 +14,8 @@ type Movie {
 }
 
 type Query {
-    listMovies(limit:Int!): [Movie]!
+    listMovies(limit:Int!): [Movie!]!
+    getMovie(id:ID!): Movie
 }
 
 schema {

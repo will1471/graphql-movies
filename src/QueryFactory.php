@@ -17,6 +17,8 @@ class QueryFactory
         switch ($name) {
             case 'listMovies':
                 return new ListMoviesQuery($this->pdo);
+            case'getMovie':
+                return new GetMovieQuery($this->pdo);
             default:
                 throw new \Exception('Unknown Query');
         }
