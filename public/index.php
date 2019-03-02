@@ -70,23 +70,6 @@ $app->add(function ($req, $res, $next) {
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
-
-$app->add(function (Request $request, Response $response, callable $next) {
-    try {
-        return $next($request, $response);
-    } catch (\Exception $e) {
-        echo '<pre>';
-        print_r($e->getMessage());
-        echo "\n";
-        echo $e->getTraceAsString();
-        echo "\n\n\n";
-        if ($e->getPrevious()) {
-            print_r($e->getPrevious()->getMessage());
-            echo $e->getPrevious()->getTraceAsString();
-        }
-    }
-});
-
 $app->map(['GET', 'POST'], '/graphql', function (Request $request, Response $response) use ($pdo): ResponseInterface {
     $server = (new \GraphQLMovies\GraphQLFactory(
         __DIR__ . '/../schema.graphqls',
