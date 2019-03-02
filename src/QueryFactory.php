@@ -12,6 +12,13 @@ class QueryFactory
         $this->pdo = $pdo;
     }
 
+    /**
+     * @param string $name
+     *
+     * @return callable
+     *
+     * @throws Exception\UnknownQuery
+     */
     public function get(string $name): callable
     {
         switch ($name) {
@@ -20,7 +27,7 @@ class QueryFactory
             case'getMovie':
                 return new GetMovieQuery($this->pdo);
             default:
-                throw new \Exception('Unknown Query');
+                throw new Exception\UnknownQuery();
         }
     }
 }
