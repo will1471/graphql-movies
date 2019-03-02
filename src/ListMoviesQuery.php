@@ -2,11 +2,19 @@
 
 namespace GraphQLMovies;
 
+use DusanKasan\Knapsack\Collection;
 use GraphQL\Type\Definition\ResolveInfo;
 
 class ListMoviesQuery
 {
     private $pdo;
+
+    private static $map = [
+        'id' => 'film_id',
+        'name' => 'title',
+        'description' => 'description',
+        'year' => 'release_year'
+    ];
 
     public function __construct(\PDO $pdo)
     {
@@ -16,15 +24,19 @@ class ListMoviesQuery
     public function __invoke($ctx, $args, $context, ResolveInfo $resolveInfo)
     {
         $limit = (int)$args['limit'];
-        $columns = build_columns($map = [
-            'id' => 'film_id',
-            'name' => 'title',
-            'description' => 'description',
-            'year' => 'release_year'
-        ], array_keys($resolveInfo->getFieldSelection()), 'id');
+
+        $columns = Helpers::buildColumns(
+            array_keys($resolveInfo->getFieldSelection()),
+            'id',
+            self::$map
+        );
+
         $select = $this->pdo->prepare($sql = "SELECT $columns FROM film LIMIT $limit;");
         $select->execute([]);
         $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
-        return mysql_rows_to_data($rows, array_flip($map));
+
+        return Collection::from($rows)
+            ->map(Helpers::renameKeys(array_flip(self::$map)))
+            ->toArray();
     }
 }

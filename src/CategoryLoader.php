@@ -2,6 +2,7 @@
 
 namespace GraphQLMovies;
 
+use DusanKasan\Knapsack\Collection;
 use Overblog\PromiseAdapter\PromiseAdapterInterface;
 
 class CategoryLoader
@@ -21,9 +22,9 @@ class CategoryLoader
      */
     public function __invoke(array $keys)
     {
-        $ids = array_unique($keys);
-        $ids = array_map('intval', $ids);
-        $ids = join(',', $ids);
+        $keys = Collection::from($keys);
+
+        $ids = Helpers::ids($keys);
 
         $sql = <<<SQL
 SELECT fc.film_id, name
@@ -35,17 +36,16 @@ SQL;
         $select->execute([]);
         $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
 
-        $grouped = group_by_key($rows, 'film_id');
-        $result = [];
-        foreach ($keys as $key) {
-            if (isset($grouped[$key])) {
-                $result[] = array_map(function (array $row): string {
-                    return $row['name'];
-                }, $grouped[$key]);
-            } else {
-                $result[] = [];
-            }
-        }
-        return $this->promiseAdapter->createFulfilled($result);
+        $grouped = (new Collection($rows))
+            ->groupByKey('film_id')
+            ->map(function (Collection $grouped) {
+                return $grouped
+                    ->map(function ($category) {
+                        return $category['name'];
+                    })
+                    ->toArray();
+            });
+
+        return $this->promiseAdapter->createAll(Helpers::dataLoaderResponseFromGrouped($keys, $grouped));
     }
 }

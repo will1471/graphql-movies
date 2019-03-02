@@ -6,40 +6,6 @@ use Psr\Http\Message\ResponseInterface;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-function group_by_key(array $data, string $key): array
-{
-    $a = [];
-    foreach ($data as $datum) {
-        if (!isset($a[$datum[$key]])) {
-            $a[$datum[$key]] = [];
-        }
-        $a[$datum[$key]][] = $datum;
-    }
-    return $a;
-}
-
-function mysql_rows_to_data(array $rows, array $map): array
-{
-    return array_map(function (array $row) use ($map): array {
-        $d = [];
-        foreach ($row as $k => $v) {
-            $d[$map[$k]] = $v;
-        }
-        return $d;
-    }, $rows);
-}
-
-function build_columns(array $map, array $usedFields, string $idKey = 'id'): string
-{
-    $columms = [$map[$idKey]];
-    foreach ($usedFields as $k) {
-        if (isset($map[$k])) $columms[] = $map[$k];
-    }
-    $columms = array_unique($columms);
-    $columms = implode(', ', $columms);
-    return $columms;
-}
-
 $host = getenv('DB_HOST');
 $pdo = new PDO(
     "mysql:host=$host;dbname=sakila;charset=utf8mb4",
