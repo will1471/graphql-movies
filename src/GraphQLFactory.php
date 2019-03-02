@@ -26,11 +26,6 @@ class GraphQLFactory
         $this->queryFactory = new QueryFactory($pdo);
     }
 
-    public function listMovies(): ListMoviesQuery
-    {
-        return new ListMoviesQuery($this->pdo);
-    }
-
     public function build(): StandardServer
     {
         if (!file_exists($this->cache)) {

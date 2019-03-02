@@ -2,11 +2,19 @@
 
 namespace GraphQLMovies;
 
+use DusanKasan\Knapsack\Collection;
 use GraphQL\Type\Definition\ResolveInfo;
 
 class GetMovieQuery
 {
     private $pdo;
+
+    private static $map = [
+        'id' => 'film_id',
+        'name' => 'title',
+        'description' => 'description',
+        'year' => 'release_year'
+    ];
 
     public function __construct(\PDO $pdo)
     {
@@ -16,18 +24,15 @@ class GetMovieQuery
     public function __invoke($ctx, $args, $context, ResolveInfo $resolveInfo)
     {
         $id = $args['id'];
-        $columns = build_columns($map = [
-            'id' => 'film_id',
-            'name' => 'title',
-            'description' => 'description',
-            'year' => 'release_year'
-        ], array_keys($resolveInfo->getFieldSelection()), 'id');
+        $columns = Helpers::buildColumns(array_keys($resolveInfo->getFieldSelection()), 'id', self::$map);
         $select = $this->pdo->prepare($sql = "SELECT $columns FROM film WHERE film_id = :id;");
         $select->execute(['id' => $id]);
         $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
         if (count($rows) != 1) {
             throw new \Exception('Movie not found');
         }
-        return mysql_rows_to_data($rows, array_flip($map))[0];
+        return Collection::from($rows)
+            ->map(Helpers::renameKeys(array_flip(self::$map)))
+            ->toArray()[0];
     }
 }
