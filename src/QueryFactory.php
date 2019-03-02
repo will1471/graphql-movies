@@ -12,7 +12,7 @@ class QueryFactory
         $this->pdo = $pdo;
     }
 
-    public function get(string $name)
+    public function get(string $name): callable
     {
         switch ($name) {
             case 'listMovies':

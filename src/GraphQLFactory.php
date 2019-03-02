@@ -51,9 +51,7 @@ class GraphQLFactory
             }
 
             if ($resolveInfo->parentType->name == 'Query') {
-                return $this->queryFactory
-                    ->get($resolveInfo->fieldName)
-                    ->__invoke($ctx, $args, $context, $resolveInfo);
+                return ($this->queryFactory->get($resolveInfo->fieldName))($ctx, $args, $context, $resolveInfo);
             }
 
             if ($resolveInfo->fieldName == 'category') {

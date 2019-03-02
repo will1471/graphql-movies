@@ -1,0 +1,10 @@
+query {
+  getMovie(id: 1) { name category }
+}
+=====
+{
+  "getMovie": {
+    "name": "ACADEMY DINOSAUR",
+    "category": ["Documentary"]
+  }
+}

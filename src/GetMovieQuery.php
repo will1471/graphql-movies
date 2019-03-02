@@ -29,7 +29,7 @@ class GetMovieQuery
         $select->execute(['id' => $id]);
         $rows = $select->fetchAll(\PDO::FETCH_ASSOC);
         if (count($rows) != 1) {
-            throw new \Exception('Movie not found');
+            return null;
         }
         return Collection::from($rows)
             ->map(Helpers::renameKeys(array_flip(self::$map)))

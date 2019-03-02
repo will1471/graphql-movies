@@ -1,0 +1,13 @@
+query {
+  m1: getMovie(id: 1) { name }
+  m2: getMovie(id: 2) { name }
+}
+=====
+{
+  "m1": {
+      "name": "ACADEMY DINOSAUR"
+  },
+  "m2": {
+    "name": "ACE GOLDFINGER"
+  }
+}

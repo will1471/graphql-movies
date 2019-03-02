@@ -1,0 +1,9 @@
+query {
+  getMovie(id: 1) { name }
+}
+=====
+{
+  "getMovie": {
+    "name": "ACADEMY DINOSAUR"
+  }
+}

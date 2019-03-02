@@ -1,0 +1,19 @@
+query {
+  listMovies(limit:2) { id name year category }
+}
+=====
+{
+  "listMovies": [{
+    "id": "1",
+    "name": "ACADEMY DINOSAUR",
+    "year": 2006,
+    "category": ["Documentary"]
+
+  },
+  {
+    "id": "2",
+    "name": "ACE GOLDFINGER",
+    "year": 2006,
+    "category": ["Horror"]
+  }]
+}

@@ -1,0 +1,7 @@
+query {
+  getMovie(id: 9999999999) { name actors { id } }
+}
+=====
+{
+  "getMovie": null
+}

@@ -1,0 +1,21 @@
+query {
+  getMovie(id: 1) { name actors { id } }
+}
+=====
+{
+  "getMovie": {
+    "name": "ACADEMY DINOSAUR",
+    "actors": [
+      {"id": "1"},
+      {"id": "10"},
+      {"id": "20"},
+      {"id": "30"},
+      {"id": "40"},
+      {"id": "53"},
+      {"id": "108"},
+      {"id": "162"},
+      {"id": "188"},
+      {"id": "198"}
+    ]
+  }
+}
