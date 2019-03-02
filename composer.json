@@ -1,9 +1,14 @@
 {
-    "name": "will/graphql-movies",
-    "require": {
-        "slim/slim": "^3.12",
-        "webonyx/graphql-php": "^0.13.0",
-        "overblog/dataloader-php": "^0.5.3"
-
+  "name": "will/graphql-movies",
+  "require": {
+    "slim/slim": "^3.12",
+    "webonyx/graphql-php": "^0.13.0",
+    "overblog/dataloader-php": "^0.5.3",
+    "ext-pdo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "GraphQLMovies\\": "src\\"
     }
+  }
 }
