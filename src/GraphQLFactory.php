@@ -45,7 +45,7 @@ class GraphQLFactory
             | Debug::RETHROW_INTERNAL_EXCEPTIONS
         );
         $serverConfig->setPromiseAdapter(new SyncPromiseAdapter());
-        $serverConfig->setFieldResolver(function ($ctx, $args, $context, ResolveInfo $resolveInfo) use ($pdo, $actorLoader, $categoryLoader) {
+        $serverConfig->setFieldResolver(function ($ctx, $args, $context, ResolveInfo $resolveInfo) {
             if (is_array($ctx) && array_key_exists($resolveInfo->fieldName, $ctx)) {
                 return $ctx[$resolveInfo->fieldName];
             }
