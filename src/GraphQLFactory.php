@@ -9,31 +9,21 @@ use GraphQL\Server\StandardServer;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Utils\AST;
 use GraphQL\Utils\BuildSchema;
-use Overblog\DataLoader\DataLoader;
 use Overblog\DataLoader\Promise\Adapter\Webonyx\GraphQL\SyncPromiseAdapter;
 
 class GraphQLFactory
 {
     private $schema;
     private $cache;
-    private $pdo;
-    private $dataLoaderPromiseAdapter;
-    private $actorLoader;
-    private $categoryLoader;
+    private $queryFactory;
+    private $dataLoaderFactory;
 
     public function __construct(string $schema, string $cache, \PDO $pdo)
     {
         $this->schema = $schema;
         $this->cache = $cache;
-        $this->pdo = $pdo;
-        $this->dataLoaderPromiseAdapter = new \Overblog\PromiseAdapter\Adapter\WebonyxGraphQLSyncPromiseAdapter();
-        $this->actorLoader = new DataLoader(
-            new ActorLoader($this->pdo, $this->dataLoaderPromiseAdapter),
-            $this->dataLoaderPromiseAdapter);
-        $this->categoryLoader = new DataLoader(
-            new CategoryLoader($this->pdo, $this->dataLoaderPromiseAdapter),
-            $this->dataLoaderPromiseAdapter
-        );
+        $this->dataLoaderFactory = new DataLoaderFactory($pdo);
+        $this->queryFactory = new QueryFactory($pdo);
     }
 
     public function listMovies(): ListMoviesQuery
@@ -61,18 +51,24 @@ class GraphQLFactory
         );
         $serverConfig->setPromiseAdapter(new SyncPromiseAdapter());
         $serverConfig->setFieldResolver(function ($ctx, $args, $context, ResolveInfo $resolveInfo) use ($pdo, $actorLoader, $categoryLoader) {
-            if (isset($ctx[$resolveInfo->fieldName])) {
+            if (is_array($ctx) && array_key_exists($resolveInfo->fieldName, $ctx)) {
                 return $ctx[$resolveInfo->fieldName];
             }
-            if ($resolveInfo->fieldName == 'listMovies') {
-                return ($this->listMovies())($ctx, $args, $context, $resolveInfo);
+
+            if ($resolveInfo->parentType->name == 'Query') {
+                return $this->queryFactory
+                    ->get($resolveInfo->fieldName)
+                    ->__invoke($ctx, $args, $context, $resolveInfo);
             }
+
             if ($resolveInfo->fieldName == 'category') {
-                return $this->categoryLoader->load($ctx['id']);
+                return $this->dataLoaderFactory->movieCategories()->load($ctx['id']);
             }
+
             if ($resolveInfo->fieldName == 'actors') {
-                return $this->actorLoader->load($ctx['id']);
+                return $this->dataLoaderFactory->movieActors()->load($ctx['id']);
             }
+
             throw new \Exception('unsupported');
         });
 
