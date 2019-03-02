@@ -203,8 +203,15 @@ $app->add(function (Request $request, Response $response, callable $next) {
 
 $app->map(['GET', 'POST'], '/graphql', function (Request $request, Response $response) use ($pdo, $actorLoader, $categoryLoader, $dataLoaderPromiseAdapter): ResponseInterface {
 
-    $contents = file_get_contents(__DIR__ . '/schema.graphqls');
-    $schema = \GraphQL\Utils\BuildSchema::build($contents);
+    $cacheFilename = __DIR__ . '/../var/cached_schema.php';
+    if (!file_exists($cacheFilename)) {
+        $document = \GraphQL\Language\Parser::parse(file_get_contents(__DIR__ . '/schema.graphqls'));
+        file_put_contents($cacheFilename, "<?php\nreturn " . var_export(\GraphQL\Utils\AST::toArray($document), true) . ";");
+    } else {
+        $document = \GraphQL\Utils\AST::fromArray(require $cacheFilename);
+    }
+
+    $schema = \GraphQL\Utils\BuildSchema::build($document);
 
     $serverConfig = new \GraphQL\Server\ServerConfig();
     $serverConfig->setSchema($schema);
