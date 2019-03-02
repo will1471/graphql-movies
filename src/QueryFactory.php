@@ -2,9 +2,12 @@
 
 namespace GraphQLMovies;
 
-class QueryFactory
+final class QueryFactory
 {
 
+    /**
+     * @var \PDO
+     */
     private $pdo;
 
     public function __construct(\PDO $pdo)
@@ -24,7 +27,7 @@ class QueryFactory
         switch ($name) {
             case 'listMovies':
                 return new ListMoviesQuery($this->pdo);
-            case'getMovie':
+            case 'getMovie':
                 return new GetMovieQuery($this->pdo);
             default:
                 throw new Exception\UnknownQuery();

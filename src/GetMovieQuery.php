@@ -5,10 +5,16 @@ namespace GraphQLMovies;
 use DusanKasan\Knapsack\Collection;
 use GraphQL\Type\Definition\ResolveInfo;
 
-class GetMovieQuery
+final class GetMovieQuery
 {
+    /**
+     * @var \PDO
+     */
     private $pdo;
 
+    /**
+     * @var array<string,string>
+     */
     private static $map = [
         'id' => 'film_id',
         'name' => 'title',
@@ -21,6 +27,13 @@ class GetMovieQuery
         $this->pdo = $pdo;
     }
 
+    /**
+     * @param mixed $ctx
+     * @param array $args
+     * @param mixed $context
+     * @param ResolveInfo $resolveInfo
+     * @return mixed
+     */
     public function __invoke($ctx, $args, $context, ResolveInfo $resolveInfo)
     {
         $id = $args['id'];

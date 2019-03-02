@@ -4,8 +4,12 @@ namespace GraphQLMovies;
 
 use DusanKasan\Knapsack\Collection;
 
-class Helpers
+final class Helpers
 {
+    /**
+     * @param array<string,string> $mapping
+     * @return callable
+     */
     public static function renameKeys(array $mapping): callable
     {
         return function (array $data) use ($mapping): array {
@@ -29,7 +33,7 @@ class Helpers
         return Collection::from($fields)
             ->append($idField)
             ->distinct()
-            ->filter(function (string $field) use ($map) {
+            ->filter(function (string $field) use ($map): bool {
                 return array_key_exists($field, $map);
             })
             ->replace($map)

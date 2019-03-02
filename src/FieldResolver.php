@@ -2,11 +2,18 @@
 
 namespace GraphQLMovies;
 
+use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 
-class FieldResolver
+final class FieldResolver
 {
+    /**
+     * @var QueryFactory
+     */
     private $queryFactory;
+    /**
+     * @var DataLoaderFactory
+     */
     private $dataLoaderFactory;
 
     public function __construct(QueryFactory $queryFactory, DataLoaderFactory $dataLoaderFactory)
@@ -15,8 +22,23 @@ class FieldResolver
         $this->dataLoaderFactory = $dataLoaderFactory;
     }
 
+    /**
+     * @param mixed $ctx
+     * @param array $args
+     * @param mixed $context
+     * @param ResolveInfo $resolveInfo
+     * @return mixed
+     */
     public function __invoke($ctx, $args, $context, ResolveInfo $resolveInfo)
     {
+        if (!is_string($resolveInfo->fieldName)) {
+            throw new \LogicException();
+        }
+
+        if (!$resolveInfo->parentType instanceof ObjectType) {
+            throw new \LogicException();
+        }
+
         if (is_array($ctx) && array_key_exists($resolveInfo->fieldName, $ctx)) {
             return $ctx[$resolveInfo->fieldName];
         }

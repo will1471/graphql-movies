@@ -5,9 +5,16 @@ namespace GraphQLMovies;
 use DusanKasan\Knapsack\Collection;
 use Overblog\PromiseAdapter\PromiseAdapterInterface;
 
-class CategoryLoader
+final class CategoryLoader
 {
+    /**
+     * @var \PDO
+     */
     private $pdo;
+
+    /**
+     * @var PromiseAdapterInterface
+     */
     private $promiseAdapter;
 
     public function __construct(\PDO $pdo, PromiseAdapterInterface $promiseAdapter)
@@ -38,9 +45,9 @@ SQL;
 
         $grouped = (new Collection($rows))
             ->groupByKey('film_id')
-            ->map(function (Collection $grouped) {
+            ->map(function (Collection $grouped): array {
                 return $grouped
-                    ->map(function ($category) {
+                    ->map(function (array $category): string {
                         return $category['name'];
                     })
                     ->toArray();

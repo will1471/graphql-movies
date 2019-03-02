@@ -3,6 +3,7 @@
 namespace GraphQLMovies;
 
 use GraphQL\Error\Debug;
+use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\Parser;
 use GraphQL\Server\ServerConfig;
 use GraphQL\Server\StandardServer;
@@ -11,11 +12,23 @@ use GraphQL\Utils\AST;
 use GraphQL\Utils\BuildSchema;
 use Overblog\DataLoader\Promise\Adapter\Webonyx\GraphQL\SyncPromiseAdapter;
 
-class GraphQLFactory
+final class GraphQLFactory
 {
+    /**
+     * @var string
+     */
     private $schema;
+    /**
+     * @var string
+     */
     private $cache;
+    /**
+     * @var QueryFactory
+     */
     private $queryFactory;
+    /**
+     * @var DataLoaderFactory
+     */
     private $dataLoaderFactory;
 
     public function __construct(string $schema, string $cache, \PDO $pdo)
@@ -38,7 +51,10 @@ class GraphQLFactory
             $document = AST::fromArray(require $this->cache);
         }
 
-        return BuildSchema::build($document);
+        if ($document instanceof DocumentNode) {
+            return BuildSchema::build($document);
+        }
+        throw new \LogicException();
     }
 
     public function build(): StandardServer

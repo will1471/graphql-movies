@@ -5,9 +5,16 @@ namespace GraphQLMovies;
 use DusanKasan\Knapsack\Collection;
 use Overblog\PromiseAdapter\PromiseAdapterInterface;
 
-class ActorLoader
+final class ActorLoader
 {
+    /**
+     * @var \PDO
+     */
     private $pdo;
+
+    /**
+     * @var PromiseAdapterInterface
+     */
     private $promiseAdapter;
 
     public function __construct(\PDO $pdo, PromiseAdapterInterface $promiseAdapter)

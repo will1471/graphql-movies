@@ -3,12 +3,19 @@
 namespace GraphQLMovies;
 
 use Overblog\DataLoader\DataLoader;
+use Overblog\PromiseAdapter\Adapter\WebonyxGraphQLSyncPromiseAdapter;
 
-class DataLoaderFactory
+final class DataLoaderFactory
 {
 
+    /**
+     * @var \PDO
+     */
     private $pdo;
 
+    /**
+     * @var WebonyxGraphQLSyncPromiseAdapter
+     */
     private $dataLoaderPromiseAdapter;
 
     /**
@@ -24,7 +31,7 @@ class DataLoaderFactory
     public function __construct(\PDO $pdo)
     {
         $this->pdo = $pdo;
-        $this->dataLoaderPromiseAdapter = new \Overblog\PromiseAdapter\Adapter\WebonyxGraphQLSyncPromiseAdapter();
+        $this->dataLoaderPromiseAdapter = new WebonyxGraphQLSyncPromiseAdapter();
     }
 
     public function movieActors(): DataLoader
